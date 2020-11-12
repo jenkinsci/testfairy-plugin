@@ -4,22 +4,54 @@ import com.testfairy.uploader.TestFairyException;
 import com.testfairy.uploader.Uploader;
 import com.testfairy.uploader.Validation;
 import hudson.EnvVars;
+import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogSet;
+import jenkins.model.ArtifactManager;
+import jenkins.util.VirtualFile;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jfree.io.FileUtilities;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
+import java.util.List;
 
 public class Utils implements Serializable {
+	private static final String CHANGE_LOG_FILE = "testfairy_change_log";
 
-	public static String extractChangeLog(EnvVars vars, final ChangeLogSet<?> changeSet, PrintStream logger) {
+	public static String extractChangeLog(AbstractBuild<?, ?> build, EnvVars vars, final ChangeLogSet<?> changeSet, PrintStream logger) {
+		ArtifactManager artifactManager = build.getArtifactManager();
+
+		try {
+			VirtualFile[] list = artifactManager.root().list();
+			for(VirtualFile virtualFile : list) {
+				if(virtualFile.canRead() && virtualFile.getName().equals(CHANGE_LOG_FILE)) {
+					InputStream stream = virtualFile.open();
+					try {
+						List<String> lines = IOUtils.readLines(stream, Charset.defaultCharset());
+						String text = StringUtils.join(lines, System.getProperty("line.separator"));
+						logger.println("Loading custom change log from artifacts");
+						return text;
+					} catch(IOException ignored) {
+					} finally {
+						if(stream != null) {
+							IOUtils.closeQuietly(stream);
+						}
+					}
+				}
+			}
+		} catch(IOException ignored) {
+		}
 
 		String fileName = vars.expand("$JENKINS_HOME") + File.separator +
 				    "jobs" + File.separator +
 				    vars.expand("$JOB_NAME") + File.separator +
 				    "builds" + File.separator +
 				    vars.expand("$BUILD_ID") + File.separator +
-				    "testfairy_change_log";
+				    CHANGE_LOG_FILE;
 
 		String changeLog = getChangeLogFromFile(fileName);
 

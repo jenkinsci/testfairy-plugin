@@ -81,7 +81,7 @@ public class TestFairyAndroidRecorder extends TestFairyBaseRecorder {
 		listener.getLogger().println("TestFairy Uploader (Deprecated)... v " + Utils.getVersion(getClass()) + ", run on " + getHostName());
 		try {
 			EnvVars vars = build.getEnvironment(listener);
-			String changeLog = Utils.extractChangeLog(vars, build.getChangeSet(), listener.getLogger());
+			String changeLog = Utils.extractChangeLog(build, vars, build.getChangeSet(), listener.getLogger());
 			AndroidBuildEnvironment environment = getDescriptor().getEnvironment(launcher);
 
 			try {
