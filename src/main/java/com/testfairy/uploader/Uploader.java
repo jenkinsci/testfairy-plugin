@@ -28,6 +28,7 @@ import org.jenkinsci.plugins.testfairy.TestFairyBaseRecorder;
 import org.jenkinsci.plugins.testfairy.Utils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Scanner;
 
@@ -189,7 +190,7 @@ public class Uploader {
 		addFileEntity(entity, "proguard_file", mappingFile);
 
 		addEntity(entity, "api_key",  recorder.getApiKey());
-		addEntity(entity, "changelog",  changeLog);
+		addEntity(entity, "changelog",  changeLog, Charset.defaultCharset());
 		addEntity(entity, "video-quality",  recorder.getVideoQuality()); // if omitted, default value is "high"
 		addEntity(entity, "screenshot-interval",  recorder.getScreenshotInterval()); // if omitted, default is 1 frame per second (videoRate = 1.0)
 		addEntity(entity, "max-duration",  recorder.getMaxDuration()); // override default value
@@ -215,9 +216,13 @@ public class Uploader {
 	}
 
 	private void addEntity(MultipartEntity entity, String name, String value) throws UnsupportedEncodingException {
+		addEntity(entity, name, value, null);
+	}
+
+	private void addEntity(MultipartEntity entity, String name, String value, Charset charset) throws UnsupportedEncodingException {
 		if (value != null && !value.isEmpty()) {
 			logger.println("--add " +name + ": " + (name.contentEquals("api_key") ? "****" : value.replace("\n", "")));
-			entity.addPart(name, new StringBody(value));
+			entity.addPart(name, new StringBody(value, charset));
 		}
 	}
 
